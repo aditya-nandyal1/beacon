@@ -1,0 +1,13 @@
+{
+  "title": "Beacon AED finder input",
+  "type": "object",
+  "schemaVersion": 1,
+  "properties": {
+    "lat": { "title": "Latitude", "type": "number", "editor": "number", "description": "WGS84 latitude of the incident" },
+    "lng": { "title": "Longitude", "type": "number", "editor": "number" },
+    "radiusM": { "title": "Search radius (m) for AEDs", "type": "integer", "editor": "number", "default": 800, "minimum": 100, "maximum": 5000 },
+    "kinds": { "title": "Resource kinds", "type": "array", "editor": "select", "items": { "type": "string", "enum": ["aed", "hospital", "fire_station", "shelter"] }, "default": ["aed", "hospital"] },
+    "includeRegistries": { "title": "Also query public AED registries (PulsePoint / city open data) where available", "type": "boolean", "default": true }
+  },
+  "required": ["lat", "lng"]
+}

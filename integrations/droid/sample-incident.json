@@ -1,0 +1,34 @@
+{
+  "incidentId": "demo-incident-001",
+  "incident": {
+    "situation": "cardiac_arrest", "protocolId": "cardiac_arrest", "severity": "critical",
+    "summary": "A man in his 60s collapsed in a gym and is not responding.",
+    "openedAt": 1761330000000, "resolvedAt": 1761330540000, "resolution": "handed off",
+    "calledEmergency": true, "calledAt": 1761330030000, "location": "Mission Bay Fitness, 3rd St, San Francisco",
+    "context": { "nearestAed": "AED — front desk, about 40 metres away" }, "helpersEnRoute": 1
+  },
+  "transcript": [
+    { "at": 1761330000000, "role": "system", "content": "[incident opened: A man is lying on the floor not moving.]" },
+    { "at": 1761330003000, "role": "assistant", "content": "I see someone on the floor. Kneel beside him, tap his shoulder hard and shout, are you okay?" },
+    { "at": 1761330012000, "role": "user", "content": "He's not responding" },
+    { "at": 1761330015000, "role": "assistant", "content": "Call 911 now — tap the red button. If anyone else is here, send them to the AED at the front desk, forty metres away." },
+    { "at": 1761330030000, "role": "system", "content": "[user placed 911 call]" },
+    { "at": 1761330045000, "role": "assistant", "content": "Look at his chest for five seconds. Is he breathing normally?" },
+    { "at": 1761330052000, "role": "user", "content": "No, just gasping a bit" },
+    { "at": 1761330055000, "role": "assistant", "content": "Heel of one hand on the center of his chest, other hand on top, fingers locked. Push hard and fast with my beat." },
+    { "at": 1761330140000, "role": "system", "content": "[camera: hands look low on the abdomen]" },
+    { "at": 1761330142000, "role": "assistant", "content": "Move your hands up — center of the chest, between the nipples. Keep going." },
+    { "at": 1761330300000, "role": "system", "content": "[helper Priya (Nurse) is on the way, ~3 min]" },
+    { "at": 1761330420000, "role": "user", "content": "The AED is here" },
+    { "at": 1761330423000, "role": "assistant", "content": "Turn it on and follow its voice. Bare the chest and put the pads where the pictures show." },
+    { "at": 1761330530000, "role": "user", "content": "Paramedics are here" },
+    { "at": 1761330533000, "role": "assistant", "content": "Step back and let them take over. You did everything right." }
+  ],
+  "alerts": [
+    { "channel": "dispatch_webhook", "status": "sent", "at": 1761330001000 },
+    { "channel": "sms", "status": "failed", "at": 1761330001500, "error": "Twilio: unverified number" },
+    { "channel": "fetchai", "status": "sent", "at": 1761330002000 },
+    { "channel": "elastic", "status": "sent", "at": 1761330002500 }
+  ],
+  "callbackUrl": "http://localhost/droid/report"
+}

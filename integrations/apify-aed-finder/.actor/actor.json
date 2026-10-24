@@ -1,0 +1,23 @@
+{
+  "actorSpecification": 1,
+  "name": "beacon-aed-finder",
+  "title": "Beacon AED & Emergency Resource Finder",
+  "description": "Given a lat/lng, returns nearby AEDs, hospitals, fire stations and shelters from OpenStreetMap plus public AED registries, de-duplicated and distance-sorted. Built for Beacon, an emergency copilot; useful to anyone building safety apps.",
+  "version": "0.1",
+  "buildTag": "latest",
+  "input": "./input_schema.json",
+  "dockerfile": "../Dockerfile",
+  "storages": {
+    "dataset": {
+      "actorSpecification": 1,
+      "title": "Nearby resources",
+      "views": {
+        "overview": {
+          "title": "Overview",
+          "transformation": { "fields": ["kind", "name", "distanceM", "address", "lat", "lng", "source"] },
+          "display": { "component": "table", "properties": { "kind": { "label": "Kind" }, "name": { "label": "Name" }, "distanceM": { "label": "Distance (m)", "format": "number" } } }
+        }
+      }
+    }
+  }
+}

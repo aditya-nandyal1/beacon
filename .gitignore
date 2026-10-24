@@ -1,0 +1,9 @@
+node_modules
+dist
+.env
+.env.local
+*.local
+convex/_generated
+integrations/droid/workspace/reports/*
+!integrations/droid/workspace/reports/.gitkeep
+.DS_Store

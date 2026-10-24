@@ -1,0 +1,32 @@
+{
+  "name": "beacon",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Beacon — point your phone at the emergency. Real-time scene triage, voice coaching, AR guidance and automatic alerting.",
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "integrations/droid"
+  ],
+  "scripts": {
+    "dev": "concurrently -n web,convex -c cyan,magenta \"npm run dev -w apps/web\" \"npx convex dev\"",
+    "dev:web": "npm run dev -w apps/web",
+    "dev:convex": "npx convex dev",
+    "build": "npm run build -w packages/protocols -w packages/agent && npm run build -w apps/web",
+    "typecheck": "npm run typecheck --workspaces --if-present && tsc -p convex/tsconfig.json --noEmit",
+    "test": "npm run test --workspaces --if-present",
+    "deploy": "npx convex deploy && npm run build -w apps/web",
+    "droid:after-action": "npm run after-action -w integrations/droid"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0",
+    "typescript": "^5.6.3",
+    "@types/node": "^22.9.0"
+  },
+  "dependencies": {
+    "convex": "^1.17.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "beacon-aed-finder",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Apify actor: nearby AEDs / hospitals / fire stations / shelters for a coordinate",
+  "main": "src/main.js",
+  "scripts": { "start": "node src/main.js" },
+  "dependencies": { "apify": "^3.2.6" },
+  "license": "MIT"
+}
