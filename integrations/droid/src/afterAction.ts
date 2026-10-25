@@ -81,10 +81,15 @@ export async function runAfterAction(payload: IncidentPayload, opts: { onTrace: 
         'Return the canonical protocol step text for a protocol id so you can check the coaching against it.',
         { protocolId: z.string() },
         async ({ protocolId }) => {
-          const { getProtocol, isProtocolId, renderProtocolForPrompt } = await import('@beacon/protocols');
-          const text = isProtocolId(protocolId) ? renderProtocolForPrompt(getProtocol(protocolId)) : 'unknown protocol';
-          await push('tool_call', `get_protocol_reference(${protocolId})`);
-          return text;
+          try {
+            const { getProtocol, isProtocolId, renderProtocolForPrompt } = await import('@beacon/protocols');
+            const text = isProtocolId(protocolId) ? renderProtocolForPrompt(getProtocol(protocolId)) : 'unknown protocol';
+            await push('tool_call', `get_protocol_reference(${protocolId}) → ${text.length} chars`);
+            return text;
+          } catch (e) {
+            await push('error', `get_protocol_reference failed: ${(e as Error).message}`);
+            return `Reference unavailable (${(e as Error).message}). Proceed using the transcript only.`;
+          }
         },
       ),
     ],
@@ -130,33 +135,51 @@ Then:
 3. If there is at least one follow-up, call open_jira_followup once with the checklist as the description and labels from: ["protocol", "alerting", "data", "ux"].
 Rules: never invent facts not in the packet; mark unknowns as unknown; do not include personal data beyond what's in the packet; keep it under 600 words.`;
 
-  const deadline = Date.now() + 120_000;
+  const deadline = Date.now() + 150_000;
   let turns = 0;
-  try {
-    await push('plan', 'Session started with cwd=workspace, autonomy=medium, tools: read/write (workspace only), open_jira_followup, get_protocol_reference');
-    for await (const msg of session.stream(prompt)) {
+  const debug: unknown[] = [];
+  const reportExists = async () => (await readFile(reportPath, 'utf8').catch(() => '')).trim().length > 50;
+
+  const runPrompt = async (text: string) => {
+    for await (const msg of session.stream(text)) {
+      debug.push(msg);
       if (Date.now() > deadline) {
         await push('error', 'wall-clock limit reached');
         await session.interrupt().catch(() => {});
-        break;
+        return;
       }
       if (msg.type === DroidMessageType.Assistant) {
         if (msg.text?.trim()) await push('thought', msg.text.trim().slice(0, 400));
       } else if (msg.type === DroidMessageType.ToolCall) {
         turns++;
         await push('tool_call', `${msg.toolUse.name} ${JSON.stringify(msg.toolUse.input ?? {}).slice(0, 200)}`);
-        if (turns > 25) {
+        if (turns > 30) {
           await push('error', 'turn cap reached');
           await session.interrupt().catch(() => {});
-          break;
+          return;
         }
       } else if (msg.type === DroidMessageType.ToolResult) {
-        await push('result', 'tool result received');
+        const r = msg as unknown as { toolResult?: { isError?: boolean; content?: unknown } };
+        await push('result', r.toolResult?.isError ? `TOOL ERROR: ${JSON.stringify(r.toolResult.content).slice(0, 400)}` : 'tool result received');
       } else if (msg.type === DroidMessageType.Error) {
-        await push('error', JSON.stringify(msg).slice(0, 300));
+        await push('error', JSON.stringify(msg).slice(0, 600));
+      } else if (msg.type === DroidMessageType.Result) {
+        const r = msg as unknown as { numTurns?: number; durationMs?: number };
+        await push('result', `turn finished (${r.numTurns ?? '?'} model turns, ${r.durationMs ?? '?'} ms)`);
       }
     }
+  };
+
+  try {
+    await push('plan', 'Session started with cwd=workspace, autonomy=medium, tools: read/write (workspace only), open_jira_followup, get_protocol_reference');
+    await runPrompt(prompt);
+    // Agents sometimes end a turn after narrating a plan. Nudge until the artifact exists.
+    for (let attempt = 1; attempt <= 3 && !(await reportExists()) && Date.now() < deadline; attempt++) {
+      await push('plan', `report not written yet — nudging agent (attempt ${attempt}/3)`);
+      await runPrompt(`You have not written the report yet. Using what you already read, write ${path.relative(WORKSPACE, reportPath)} NOW with the required sections (use the Create tool), then call open_jira_followup once if there are follow-ups. Do not re-read files.`);
+    }
   } finally {
+    await writeFile(path.join(WORKSPACE, 'reports', `${payload.incidentId}.debug.json`), JSON.stringify(debug, null, 2)).catch(() => {});
     await session.close().catch(() => {});
   }
 
