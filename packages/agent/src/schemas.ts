@@ -4,14 +4,16 @@ import { allProtocols } from '@beacon/protocols';
 const protocolIds = allProtocols.map((p) => p.id) as [string, ...string[]];
 
 /** Normalized bounding box: x, y, w, h in [0,1] relative to the frame. */
-export const BBox = z.tuple([z.number().min(0).max(1), z.number().min(0).max(1), z.number().min(0).max(1), z.number().min(0).max(1)]);
+const n01 = z.coerce.number().min(0).max(1);
+const bool = z.preprocess((v) => (v === 'true' ? true : v === 'false' ? false : v), z.boolean());
+export const BBox = z.tuple([n01, n01, n01, n01]);
 export type BBox = z.infer<typeof BBox>;
 
 export const PersonState = z.enum(['alert', 'distressed', 'unresponsive', 'unknown']);
 
 export const SceneAssessment = z.object({
   situation: z.enum([...protocolIds, 'none', 'unclear']),
-  confidence: z.number().min(0).max(1),
+  confidence: n01,
   severity: z.enum(['none', 'low', 'moderate', 'high', 'critical']),
   /** One spoken sentence. What a calm dispatcher would say first. */
   summary: z.string().max(240),
@@ -31,7 +33,7 @@ export const SceneAssessment = z.object({
       z.object({
         label: z.string(),
         kind: z.enum(['fire', 'smoke', 'water', 'electrical', 'structural', 'traffic', 'chemical', 'sharp', 'other']),
-        urgent: z.boolean().default(false),
+        urgent: bool.default(false),
         bbox: BBox.nullable().default(null),
       }),
     )
@@ -46,14 +48,14 @@ export const SceneAssessment = z.object({
     )
     .default([]),
   recommendedProtocol: z.enum(protocolIds).nullable(),
-  callEmergencyServices: z.boolean(),
+  callEmergencyServices: bool,
   /** Things the model could not determine from a single frame; the coach asks about these. */
   uncertainties: z.array(z.string()).default([]),
   /** For CPR re-checks only. */
   cprFeedback: z
     .object({
-      handsOnChestCenter: z.boolean().nullable(),
-      armsStraight: z.boolean().nullable(),
+      handsOnChestCenter: bool.nullable(),
+      armsStraight: bool.nullable(),
       note: z.string().max(120).nullable(),
     })
     .nullable()
@@ -68,11 +70,11 @@ export const CoachTurn = z.object({
   protocolId: z.enum(protocolIds).nullable(),
   stepId: z.string().nullable(),
   /** Set when the coach wants the client to surface the one-tap 911 control. */
-  urgeCall: z.boolean().default(false),
+  urgeCall: bool.default(false),
   /** Ask nearby trained helpers to come. */
-  requestHelpers: z.boolean().default(false),
+  requestHelpers: bool.default(false),
   /** The incident is resolved / handed to EMS. */
-  endIncident: z.boolean().default(false),
+  endIncident: bool.default(false),
   /** Free-text observation to log (e.g. "tourniquet applied 14:02"). */
   logNote: z.string().max(200).nullable().default(null),
 });
