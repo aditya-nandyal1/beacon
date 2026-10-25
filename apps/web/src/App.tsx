@@ -101,7 +101,7 @@ export default function App() {
         <AfterAction incident={eng.incident} report={eng.afterAction ?? null} messages={eng.messages ?? []} onNew={eng.reset} />
       )}
 
-      {eng.errors.length > 0 && eng.phase !== 'idle' && (
+      {eng.errors.length > 0 && eng.phase !== 'idle' && new URLSearchParams(location.search).has('debug') && (
         <div className="errors">{eng.errors.slice(-1).map((e, i) => <div key={i}>{e}</div>)}</div>
       )}
     </div>

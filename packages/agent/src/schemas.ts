@@ -4,7 +4,26 @@ import { allProtocols } from '@beacon/protocols';
 const protocolIds = allProtocols.map((p) => p.id) as [string, ...string[]];
 
 /** Normalized bounding box: x, y, w, h in [0,1] relative to the frame. */
-const n01 = z.coerce.number().min(0).max(1);
+const SEV = ['none', 'low', 'moderate', 'high', 'critical'] as const;
+/** Tolerant number in [0,1]: strings, NaN, percentages → sane value. */
+const n01 = z.preprocess((v) => {
+  const n = typeof v === 'string' ? parseFloat(v) : (v as number);
+  if (typeof n !== 'number' || !Number.isFinite(n)) return 0.5;
+  return Math.min(1, Math.max(0, n > 1 ? n / 100 : n));
+}, z.number().min(0).max(1));
+/** Tolerant severity: accepts enum strings, synonyms, or numbers (0–1 or 0–4). */
+const sev = z.preprocess((v) => {
+  if (typeof v === 'number' && Number.isFinite(v)) return SEV[Math.min(4, Math.max(0, Math.round(v <= 1 ? v * 4 : v)))];
+  if (typeof v === 'string') {
+    const t = v.toLowerCase().trim();
+    if ((SEV as readonly string[]).includes(t)) return t;
+    if (t.includes('crit') || t.includes('life')) return 'critical';
+    if (t.includes('high') || t.includes('severe') || t.includes('major')) return 'high';
+    if (t.includes('mod') || t.includes('med')) return 'moderate';
+    if (t.includes('low') || t.includes('minor') || t.includes('mild')) return 'low';
+  }
+  return 'none';
+}, z.enum(SEV));
 const bool = z.preprocess((v) => (v === 'true' ? true : v === 'false' ? false : v), z.boolean());
 export const BBox = z.tuple([n01, n01, n01, n01]);
 export type BBox = z.infer<typeof BBox>;
@@ -14,7 +33,7 @@ export const PersonState = z.enum(['alert', 'distressed', 'unresponsive', 'unkno
 export const SceneAssessment = z.object({
   situation: z.enum([...protocolIds, 'none', 'unclear']),
   confidence: n01,
-  severity: z.enum(['none', 'low', 'moderate', 'high', 'critical']),
+  severity: sev,
   /** One spoken sentence. What a calm dispatcher would say first. */
   summary: z.string().max(240),
   people: z
