@@ -18,8 +18,8 @@ export async function findNearbyResources(lat: number, lng: number, kinds: Nearb
   if (token && actor) {
     try {
       const ac = new AbortController();
-      const t = setTimeout(() => ac.abort(), 25_000);
-      const r = await fetch(`https://api.apify.com/v2/acts/${encodeURIComponent(actor)}/run-sync-get-dataset-items?token=${token}&timeout=20&memory=256`, {
+      const t = setTimeout(() => ac.abort(), 45_000);
+      const r = await fetch(`https://api.apify.com/v2/acts/${encodeURIComponent(actor)}/run-sync-get-dataset-items?token=${token}&timeout=40&memory=256`, {
         method: 'POST',
         signal: ac.signal,
         headers: { 'content-type': 'application/json' },

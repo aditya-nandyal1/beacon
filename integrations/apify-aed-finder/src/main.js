@@ -32,10 +32,10 @@ if (kinds.includes('aed')) q.push(`node["emergency"="defibrillator"](around:${ra
 if (kinds.includes('hospital')) q.push(`nwr["amenity"="hospital"](around:${wide},${lat},${lng});`);
 if (kinds.includes('fire_station')) q.push(`nwr["amenity"="fire_station"](around:${wide},${lat},${lng});`);
 if (kinds.includes('shelter')) q.push(`nwr["amenity"="shelter"](around:${wide},${lat},${lng});nwr["social_facility"="shelter"](around:${wide},${lat},${lng});`);
-const overpassQ = `[out:json][timeout:10];(${q.join('')});out center 60;`;
-for (const endpoint of ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter']) {
+const overpassQ = `[out:json][timeout:25];(${q.join('')});out center 60;`;
+for (const endpoint of ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter', 'https://overpass.private.coffee/api/interpreter']) {
   try {
-    const r = await fetch(endpoint, { method: 'POST', body: 'data=' + encodeURIComponent(overpassQ), headers: { 'content-type': 'application/x-www-form-urlencoded' }, signal: AbortSignal.timeout(12_000) });
+    const r = await fetch(endpoint, { method: 'POST', body: 'data=' + encodeURIComponent(overpassQ), headers: { 'content-type': 'application/x-www-form-urlencoded' }, signal: AbortSignal.timeout(28_000) });
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     const j = await r.json();
     for (const e of j.elements ?? []) {
